@@ -43,7 +43,7 @@ def test_wrapper_runs_the_update_command(module_name, function_name, kwargs, exp
     module = importlib.import_module(f"mcp_mikrotik.scope.{module_name}")
     commands = []
 
-    async def execute(command, _ctx, device=None):
+    async def execute(command, _ctx, device=None, redact=None):
         commands.append(command)
         if "count-only" in command:
             return "1"

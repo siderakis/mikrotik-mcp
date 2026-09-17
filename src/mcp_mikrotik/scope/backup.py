@@ -267,7 +267,11 @@ async def mikrotik_restore_backup(
     secret = (password or "").replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$")
     cmd = f'/system backup load name={filename} password="{secret}"'
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    # The logs show the command as sent, which carries the escaped form, so declare both: a password
+    # with a quote, a dollar sign or a backslash would otherwise not match and reach the log.
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[password, secret] if password else None
+    )
 
     # RouterOS 7 answers "System configuration restored, rebooting now"; the reply may also be empty when
     # the connection drops with the reboot. Older releases printed "Restoring system configuration".

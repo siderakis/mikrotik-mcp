@@ -23,9 +23,11 @@ def run(coro):
 
 def router(load_reply, file_count="1"):
     seen = []
+    redacted = []
 
-    async def execute(command, _ctx, device=None):
+    async def execute(command, _ctx, device=None, redact=None):
         seen.append(command)
+        redacted.append(redact)
         if command.startswith("/file print count-only"):
             return file_count
         if command.startswith("/system backup load"):
@@ -33,6 +35,7 @@ def router(load_reply, file_count="1"):
         return ""
 
     execute.seen = seen
+    execute.redacted = redacted
     return execute
 
 
@@ -43,6 +46,7 @@ def test_an_unencrypted_backup_is_loaded_with_an_empty_password(ctx, monkeypatch
     run(mod.mikrotik_restore_backup(ctx, "mine.backup"))
 
     assert execute.seen[-1] == '/system backup load name=mine.backup password=""'
+    assert execute.redacted[-1] is None  # nothing to hide
 
 
 def test_the_password_is_sent_and_escaped(ctx, monkeypatch):
@@ -52,6 +56,19 @@ def test_the_password_is_sent_and_escaped(ctx, monkeypatch):
     run(mod.mikrotik_restore_backup(ctx, "mine.backup", password=f'a"b$c{BS}d'))
 
     assert execute.seen[-1] == f'/system backup load name=mine.backup password="a{BS}"b{BS}$c{BS}{BS}d"'
+
+
+def test_the_password_stays_out_of_the_logs_in_both_forms(ctx, monkeypatch):
+    """The command carries the escaped password, so declaring only the raw one would let it into the log."""
+    from mcp_mikrotik.connector import _shown
+
+    execute = router("System configuration restored, rebooting now")
+    monkeypatch.setattr(mod, "execute_mikrotik_command", execute)
+    password = f'a"b$c{BS}d'
+
+    run(mod.mikrotik_restore_backup(ctx, "mine.backup", password=password))
+
+    assert _shown(execute.seen[-1], execute.redacted[-1]) == '/system backup load name=mine.backup password="***"'
 
 
 @pytest.mark.parametrize(
