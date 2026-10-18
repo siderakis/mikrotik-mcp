@@ -55,7 +55,8 @@ review and idea.
 <!-- hassankhurram is listed by request: the commit carries an org email, so the
      API still reports hassan-khurram-hsol. Keep this override on regeneration.
      pdostal and inistor are here for pull requests and issue reports rather
-     than merged commits, so the contributors API does not return them either. -->
+     than merged commits, so the contributors API does not return them either.
+     paoValle is here for pull request #182. -->
 <p>
 <a href="https://github.com/jeff-nasseri" title="jeff-nasseri"><img src="https://avatars.githubusercontent.com/u/57312476?s=72" width="72" height="72" alt="jeff-nasseri" /></a>
 <a href="https://github.com/goto1134" title="goto1134"><img src="https://avatars.githubusercontent.com/u/9569795?s=72" width="72" height="72" alt="goto1134" /></a>
@@ -67,6 +68,7 @@ review and idea.
 <a href="https://github.com/OronF" title="OronF"><img src="https://avatars.githubusercontent.com/u/133911424?s=72" width="72" height="72" alt="OronF" /></a>
 <a href="https://github.com/pdostal" title="pdostal"><img src="https://avatars.githubusercontent.com/u/1254493?s=72" width="72" height="72" alt="pdostal" /></a>
 <a href="https://github.com/inistor" title="inistor"><img src="https://avatars.githubusercontent.com/u/13348711?s=72" width="72" height="72" alt="inistor" /></a>
+<a href="https://github.com/paoValle" title="paoValle"><img src="https://avatars.githubusercontent.com/u/11146190?s=72" width="72" height="72" alt="paoValle" /></a>
 </p>
 
 Contributions of every kind are welcome: code, bug reports, documentation and
