@@ -20,6 +20,7 @@ from mcp.server.mcpserver import Context
 
 from ..app import mcp, READ, annotate
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ..sensitive import redact_sensitive_text
 
 # Every property `/tool netwatch` has except the three that hold scripts.
@@ -93,13 +94,13 @@ async def mikrotik_list_netwatch(
         command += f" proplist={_PROBE_METADATA}"
     filters = []
     if host_filter:
-        filters.append(f'host~"{host_filter}"')
+        filters.append(f'host~"{ros_quoted(host_filter)}"')
     if comment_filter:
-        filters.append(f'comment~"{comment_filter}"')
+        filters.append(f'comment~"{ros_quoted(comment_filter)}"')
     if status_filter:
-        filters.append(f'status="{status_filter}"')
+        filters.append(f'status="{ros_quoted(status_filter)}"')
     if type_filter:
-        filters.append(f'type="{type_filter}"')
+        filters.append(f'type="{ros_quoted(type_filter)}"')
     if filters:
         command += " where " + " ".join(filters)
 

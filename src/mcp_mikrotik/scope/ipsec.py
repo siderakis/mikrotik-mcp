@@ -12,6 +12,7 @@ from mcp.server.mcpserver import Context
 
 from ..app import mcp, READ, annotate
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 
 
 async def _print_detail(
@@ -78,15 +79,18 @@ async def mikrotik_get_ipsec_installed_sa(
       which counters move under traffic you control instead.
 
     Notes:
-        Address filters are exact matches on the SA endpoints, which are the
+        Address filters are substring matches on the SA endpoints, which are the
         tunnel endpoints (public addresses), not the encapsulated subnets.
+        Behind NAT-T the endpoints carry the port (`198.51.100.2:4500`), which
+        is why this is not an exact match: filtering on the bare address would
+        find nothing there and report no SAs while some exist.
     """
     await ctx.info("Listing installed IPsec security associations")
     filters = []
     if src_address_filter:
-        filters.append(f'src-address="{src_address_filter}"')
+        filters.append(f'src-address~"{ros_quoted(src_address_filter)}"')
     if dst_address_filter:
-        filters.append(f'dst-address="{dst_address_filter}"')
+        filters.append(f'dst-address~"{ros_quoted(dst_address_filter)}"')
     return await _print_detail(
         ctx, "/ip ipsec installed-sa print detail", "IPSEC INSTALLED SAs",
         "No installed IPsec security associations found matching the criteria.",
@@ -113,9 +117,9 @@ async def mikrotik_get_ipsec_active_peers(
     await ctx.info("Listing active IPsec peers")
     filters = []
     if remote_address_filter:
-        filters.append(f'remote-address="{remote_address_filter}"')
+        filters.append(f'remote-address="{ros_quoted(remote_address_filter)}"')
     if state_filter:
-        filters.append(f'state="{state_filter}"')
+        filters.append(f'state="{ros_quoted(state_filter)}"')
     return await _print_detail(
         ctx, "/ip ipsec active-peers print detail", "IPSEC ACTIVE PEERS",
         "No active IPsec peers found matching the criteria.",
@@ -139,9 +143,9 @@ async def mikrotik_list_ipsec_peers(
     await ctx.info("Listing IPsec peers")
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     return await _print_detail(
         ctx, "/ip ipsec peer print detail", "IPSEC PEERS",
         "No IPsec peers found matching the criteria.",
@@ -172,11 +176,11 @@ async def mikrotik_list_ipsec_policies(
     await ctx.info("Listing IPsec policies")
     filters = []
     if peer_filter:
-        filters.append(f'peer~"{peer_filter}"')
+        filters.append(f'peer~"{ros_quoted(peer_filter)}"')
     if src_address_filter:
-        filters.append(f'src-address~"{src_address_filter}"')
+        filters.append(f'src-address~"{ros_quoted(src_address_filter)}"')
     if dst_address_filter:
-        filters.append(f'dst-address~"{dst_address_filter}"')
+        filters.append(f'dst-address~"{ros_quoted(dst_address_filter)}"')
     return await _print_detail(
         ctx, "/ip ipsec policy print detail", "IPSEC POLICIES",
         "No IPsec policies found matching the criteria.",
@@ -202,7 +206,7 @@ async def mikrotik_list_ipsec_profiles(
     await ctx.info("Listing IPsec profiles")
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     return await _print_detail(
         ctx, "/ip ipsec profile print detail", "IPSEC PROFILES",
         "No IPsec profiles found matching the criteria.",
@@ -227,7 +231,7 @@ async def mikrotik_list_ipsec_proposals(
     await ctx.info("Listing IPsec proposals")
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     return await _print_detail(
         ctx, "/ip ipsec proposal print detail", "IPSEC PROPOSALS",
         "No IPsec proposals found matching the criteria.",

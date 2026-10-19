@@ -6,6 +6,8 @@ an SMTP login for an alert — and a read tool that dumps every body by default
 turns one careless script into an exposure. Ask for `include_source=True` when
 you need the body, and even then the output is passed through the server's
 redaction before it is returned.
+
+The same goes for a scheduler's `on-event`, which can carry the same commands inline.
 """
 
 from typing import Optional
@@ -14,6 +16,7 @@ from mcp.server.mcpserver import Context
 
 from ..app import mcp, READ, annotate
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ..sensitive import redact_sensitive_text
 
 # Everything a script has except `source`.
@@ -22,10 +25,17 @@ _SCRIPT_METADATA = (
 )
 
 
+# Everything a scheduler has except `on-event`.
+_SCHEDULER_METADATA = (
+    "name,start-date,start-time,interval,owner,policy,run-count,next-run,comment,disabled"
+)
+
+
 @mcp.tool(name="list_schedulers", annotations=annotate(READ, "List Schedulers"))
 async def mikrotik_list_schedulers(
     ctx: Context,
     name_filter: Optional[str] = None,
+    include_source: bool = False,
     device: Optional[str] = None
 ) -> str:
     """Lists the scheduled tasks with their interval, next run and run count.
@@ -36,18 +46,29 @@ async def mikrotik_list_schedulers(
         into a script that errors out, which RouterOS does not surface here —
         it shows up in the log under the `script` topic.
 
-        `on-event` is passed through the server's redaction, since a scheduler
-        can carry commands inline rather than calling a named script.
+        `include_source=False` (the default) omits `on-event`, because a
+        scheduler can carry commands inline, and those routinely hold a bot
+        token or a password inside a URL. Redaction only recognises labelled
+        secrets, so withholding the field is what keeps them off the wire. Set
+        it to True only when you intend to read the commands; the output is
+        redacted either way, but redaction is pattern-based and is not a
+        guarantee.
     """
-    await ctx.info("Listing schedulers")
+    await ctx.info(
+        "Listing schedulers with on-event" if include_source else "Listing schedulers (metadata only)"
+    )
     command = "/system scheduler print detail"
+    if not include_source:
+        command += f" proplist={_SCHEDULER_METADATA}"
     if name_filter:
-        command += f' where name~"{name_filter}"'
+        command += f' where name~"{ros_quoted(name_filter)}"'
 
     result = await execute_mikrotik_command(command, ctx, device=device)
     if not result or "name=" not in result:
         return "No schedulers found matching the criteria."
-    return f"SCHEDULERS:\n\n{redact_sensitive_text(result)}"
+
+    heading = "SCHEDULERS (with on-event)" if include_source else "SCHEDULERS (metadata only)"
+    return f"{heading}:\n\n{redact_sensitive_text(result)}"
 
 
 @mcp.tool(name="list_scripts", annotations=annotate(READ, "List Scripts"))
@@ -75,7 +96,7 @@ async def mikrotik_list_scripts(
     if not include_source:
         command += f" proplist={_SCRIPT_METADATA}"
     if name_filter:
-        command += f' where name~"{name_filter}"'
+        command += f' where name~"{ros_quoted(name_filter)}"'
 
     result = await execute_mikrotik_command(command, ctx, device=device)
     if not result or "name=" not in result:

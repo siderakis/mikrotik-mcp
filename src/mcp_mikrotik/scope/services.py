@@ -13,6 +13,7 @@ from mcp.server.mcpserver import Context
 
 from ..app import mcp, READ, annotate
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 
 
 @mcp.tool(name="list_ip_services", annotations=annotate(READ, "List IP Services"))
@@ -42,7 +43,7 @@ async def mikrotik_list_ip_services(
     command = "/ip service print detail"
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if enabled_only:
         filters.append("disabled=no")
     if filters:

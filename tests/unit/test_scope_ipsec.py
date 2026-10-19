@@ -45,9 +45,11 @@ def test_installed_sa_command_filters_and_device(ctx, monkeypatch):
     _run(ipsec.mikrotik_get_ipsec_installed_sa(
         ctx, src_address_filter="192.0.2.1", dst_address_filter="198.51.100.2",
     ))
+    # A substring match, not an exact one: behind NAT-T the SA endpoints carry the
+    # port (`192.0.2.1:4500`), so `src-address="192.0.2.1"` finds nothing there.
     assert fake.commands[-1] == (
         '/ip ipsec installed-sa print detail where '
-        'src-address="192.0.2.1" dst-address="198.51.100.2"'
+        'src-address~"192.0.2.1" dst-address~"198.51.100.2"'
     )
 
 
